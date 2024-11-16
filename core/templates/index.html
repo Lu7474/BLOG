@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block main %}
+<br>
+{% for post in posts %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h6>{{ post[3] }}</h6>
+        <p class="card-text text-muted" align="left">
+            <strong>Опубликовано:</strong> {{ post[4].strftime('%H:%M %d %b %Y') }}
+        </p>
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">{{ post[1] }}</h5>
+        <p class="card-text">{{ post[2][:31] }}...</p>
+
+        <a href="{{ url_for('post_detail', id=post[0]) }}" class="btn btn-primary">Читать</a>
+
+        <form method="POST" action="{{ url_for('del_post_fr', id=post[0]) }}" class="d-inline"
+            onsubmit="return confirm('Вы уверены, что хотите удалить этот пост?')">
+            <button type="submit" class="btn btn-primary">Удалить</button>
+        </form>
+        
+        <a href="{{ url_for('edit_post_fr', id=post[0]) }}" class="btn btn-primary">Изменить</a>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
