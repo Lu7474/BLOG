@@ -10,8 +10,8 @@
         </p>
     </div>
     <div class="card-body">
-        <img src="{{ url_for('static', filename='uploads/' + post[5].replace('\\', '/').split('/')[-1]) }}" alt="Изображение"
-            class="img-fluid">
+        <img src="{{ url_for('static', filename='uploads/' + post[5].replace('\\', '/').split('/')[-1]) }}"
+            alt="Изображение" class="img-fluid">
         <br>
         <h5 class="card-title">{{ post[1] }}</h5>
         <p class="card-text">{{ post[2] }}</p>

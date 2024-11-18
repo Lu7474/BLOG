@@ -75,7 +75,8 @@ def get_post(id):
             cursor.execute(
                 """
                 SELECT * FROM posts WHERE id = %s;
-                """, (id,)
+                """,
+                (id,),
             )
             post = cursor.fetchone()
             return post
