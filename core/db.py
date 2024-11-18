@@ -1,5 +1,9 @@
 import psycopg2
+import os
 from datetime import datetime
+from werkzeug.utils import secure_filename
+# from core import UPLOAD_FOLDER, ALLOWED_EXTENSIONS
+
 
 connection = psycopg2.connect(
     dbname="BLOG",
@@ -21,31 +25,42 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def save_image(file):
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+        return file_path
+    return None
+
+
 def get_posts(search=None):
     if search:
         cursor.execute(
             f"""
-            SELECT posts.id, title, description, username, date_pub FROM posts INNER JOIN users ON posts.author_id=users.id WHERE title LIKE '%{search}%';
+            SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id WHERE title LIKE '%{search}%';
             """
         )
     else:
         cursor.execute(
             """
-            SELECT posts.id, title, description, username, date_pub FROM posts INNER JOIN users ON posts.author_id=users.id;
+            SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id;
             """
         )
     posts = cursor.fetchall()
     return posts
 
 
-def save_post(title, description):
-
+def save_post(title, description, image_file=None):
+    image_path = None
+    if image_file:
+        image_path = save_image(image_file)
     cursor.execute(
         """
-        INSERT INTO posts (title, description, author_id, date_pub)
-        VALUES (%s, %s, 1, %s);
+        INSERT INTO posts (title, description, author_id, date_pub, image_path)
+        VALUES (%s, %s, 1, %s, %s);
         """,
-        (title, description, date_pub),
+        (title, description, date_pub, image_path),
     )
     connection.commit()
 
@@ -53,9 +68,8 @@ def save_post(title, description):
 def get_post(id):
     cursor.execute(
         """
-        SELECT * FROM posts
-        
-        """,
+        SELECT * FROM posts WHERE id = %s;
+        """, (id,)
     )
     post = cursor.fetchone()
     return post
@@ -81,7 +95,3 @@ def change_post(id, title_n, description_n):
         (title_n, description_n, id),
     )
     connection.commit()
-
-
-# cursor.close()
-# connection.close()

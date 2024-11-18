@@ -5,7 +5,7 @@ from core import app
 from core.db import get_posts, get_post, save_post, del_post, change_post, allowed_file
 
 
-@app.route("/", methods=["GET"])
+@app.route("/")
 def index():
     search = request.args.get("search")
     posts = get_posts(search=search)
@@ -17,7 +17,8 @@ def add_post():
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
-        save_post(title, description)
+        image_file = request.files.get("image")
+        save_post(title, description, image_file)
         return redirect(url_for("index"))
     return render_template("add_post.html")
 
