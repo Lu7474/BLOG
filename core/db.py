@@ -2,17 +2,17 @@ import psycopg2
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-# from core import UPLOAD_FOLDER, ALLOWED_EXTENSIONS
 
 
-connection = psycopg2.connect(
-    dbname="BLOG",
-    user="postgres",
-    password="postgres",
-    host="localhost",
-    port=5432,
-)
-cursor = connection.cursor()
+def get_db_connection():
+    return psycopg2.connect(
+        dbname="BLOG",
+        user="postgres",
+        password="postgres",
+        host="localhost",
+        port=5432,
+    )
+
 
 date_pub = datetime.now()
 
@@ -35,63 +35,73 @@ def save_image(file):
 
 
 def get_posts(search=None):
-    if search:
-        cursor.execute(
-            f"""
-            SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id WHERE title LIKE '%{search}%';
-            """
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id;
-            """
-        )
-    posts = cursor.fetchall()
-    return posts
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            if search:
+                cursor.execute(
+                    f"""
+                    SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id WHERE title LIKE '%{search}%';
+                    """
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT posts.id, title, description, username, date_pub, image_path FROM posts INNER JOIN users ON posts.author_id=users.id;
+                    """
+                )
+            posts = cursor.fetchall()
+            return posts
 
 
 def save_post(title, description, image_file=None):
-    image_path = None
-    if image_file:
-        image_path = save_image(image_file)
-    cursor.execute(
-        """
-        INSERT INTO posts (title, description, author_id, date_pub, image_path)
-        VALUES (%s, %s, 1, %s, %s);
-        """,
-        (title, description, date_pub, image_path),
-    )
-    connection.commit()
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            image_path = None
+            if image_file:
+                image_path = save_image(image_file)
+            cursor.execute(
+                """
+                INSERT INTO posts (title, description, author_id, date_pub, image_path)
+                VALUES (%s, %s, 1, %s, %s);
+                """,
+                (title, description, date_pub, image_path),
+            )
+            connection.commit()
 
 
 def get_post(id):
-    cursor.execute(
-        """
-        SELECT * FROM posts WHERE id = %s;
-        """, (id,)
-    )
-    post = cursor.fetchone()
-    return post
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM posts WHERE id = %s;
+                """, (id,)
+            )
+            post = cursor.fetchone()
+            return post
 
 
 def del_post(id):
-    cursor.execute(
-        """
-        DELETE FROM posts WHERE id= (%s);
-        """,
-        (id,),
-    )
-    connection.commit()
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM posts WHERE id= (%s);
+                """,
+                (id,),
+            )
+            connection.commit()
 
 
 def change_post(id, title_n, description_n):
-    cursor.execute(
-        """
-    UPDATE posts
-    SET title = (%s), description = (%s)
-    WHERE id = (%s)
-    """,
-        (title_n, description_n, id),
-    )
-    connection.commit()
+    with get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+            UPDATE posts
+            SET title = (%s), description = (%s)
+            WHERE id = (%s)
+            """,
+                (title_n, description_n, id),
+            )
+            connection.commit()
